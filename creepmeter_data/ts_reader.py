@@ -3,6 +3,7 @@
 import h5py
 import pandas as pd
 import numpy as np
+import ts_obj  # local import
 
 
 def read_slip_over_time(hdf5file):
@@ -12,8 +13,8 @@ def read_slip_over_time(hdf5file):
     Not every file contains Temperature and Orthogonal fields,
     so in this function, we don't consider those.  This is meant to be the most general reader.
 
-    :param hdf5file: name of HDF5 file
-    :return: time in UTM, slip in mm, lon, lat, and obliquity in degrees, station_name, network
+    :param hdf5file: name of HDF5 file, string
+    :return: ts_obj from this creepmeter repo
     """
     with h5py.File(hdf5file, 'r') as f:
         keys = list(f.keys())
@@ -31,5 +32,6 @@ def read_slip_over_time(hdf5file):
                 obliquity = f.attrs['obliquity']
                 lon, lat, network = f.attrs['longitude'], f.attrs['latitude'], f.attrs['network']
                 slip = slip / np.cos(np.radians(obliquity))
-
-    return decoded_time, slip, lon, lat, obliquity, station_name, network
+    ts_trace = ts_obj.ts_obj(t=decoded_time, slip_mm=slip, station=station_name, lon=lon, lat=lat, network=network,
+                             obliquity=obliquity)
+    return ts_trace

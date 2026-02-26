@@ -53,3 +53,25 @@ class ts_obj:
             temperature=temp_clip,
             orthogonal=orth_clip,
         )
+
+    def normalize_ts(self):
+        return ts_obj(
+            t=self.t,
+            slip_mm=self.slip_mm / self.slip_mm.max,
+            station=self.station,
+            lon=self.lon,
+            lat=self.lat,
+            network=self.network,
+            obliquity=self.obliquity,
+            temp_t=self.temperature_t,
+            temperature=self.temperature,
+            orthogonal=self.orthogonal,
+        )
+
+    def get_velocity(self):
+        delta = self.t[1] - self.t[0]
+        seconds = delta.total_seconds()
+        slip_m = self.slip_mm / 1000
+        velocity = np.diff(slip_m) / seconds  # in meters per second
+        time = self.t[0:-1]  # should make this the middle of the window actually
+        return time, velocity

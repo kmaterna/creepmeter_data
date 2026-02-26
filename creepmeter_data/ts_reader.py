@@ -87,3 +87,24 @@ def read_usgs_tenminute(filename, verbose=True):
     ts_trace = ts_obj.ts_obj(t=dtarray, slip_mm=value, station=station, lon=row['Longitude'],
                              lat=row['Latitude'], network=row['Network'], obliquity="")
     return ts_trace
+
+
+def read_multiple_ts(filelist, verbose=True):
+    """
+    Read the full dozens of time series from ALL hdf5 and USGS data records.
+    Returns as a dictionary of traces, one for each station.
+
+    :param filelist: - list of files that contain creepmeter time series information
+    :param verbose: default True
+    :returns: dictionary of ts_traces
+    """
+    dict_of_traces = {}
+    for item in filelist:
+        if '.h5' in item:
+            ts_trace = read_slip_over_time(item, verbose=verbose)
+        elif '.10min' in item:
+            ts_trace = read_usgs_tenminute(item, verbose=verbose)
+        else:
+            continue
+        dict_of_traces[ts_trace.station] = ts_trace
+    return dict_of_traces

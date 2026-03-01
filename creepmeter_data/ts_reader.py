@@ -59,28 +59,17 @@ def read_usgs_tenminute(filename, verbose=True):
     dtarray = []
     station = filename.split('/')[-1].split('.')[0]
     for i in range(len(year)):
-        year_str = str(int(year[i]))
+        year_int = int(year[i])
         doy = int(np.floor(decimal_date[i]))
         fractional_day = decimal_date[i] - doy   # something like 0.347000 (part of a day)
-        number_of_minutes = fractional_day * (60*24)  # number of minutes past midnight
-        hour = int(np.floor(number_of_minutes / 60))
-        minutes = int(np.floor(number_of_minutes)) - hour*60  # minutes past the hour
-        if hour < 10:
-            hour_string = "0" + str(hour)
-        else:
-            hour_string = str(hour)
-        if minutes < 10:
-            minute_string = "0" + str(minutes)
-        else:
-            minute_string = str(minutes)
-        if doy < 10:
-            doy_str = "00"+str(doy)
-        elif doy < 100:
-            doy_str = "0"+str(doy)
-        else:
-            doy_str = str(doy)
-        formatted_datetime = dt.datetime.strptime(str(year_str)+"-"+str(doy_str)+"-"+str(hour_string)
-                                                  + "-" + str(minute_string), "%Y-%j-%H-%M")
+        seconds = fractional_day * 86400.0
+
+        # Round to nearest N-minute interval
+        interval = 10 * 60  # 10 minutes
+        seconds_rounded = int(round(seconds / interval) * interval)
+        formatted_datetime = dt.datetime(year_int, 1, 1)
+        delta = dt.timedelta(days=doy - 1, seconds=seconds_rounded)
+        formatted_datetime = formatted_datetime + delta
         dtarray.append(formatted_datetime)
     metadata = pd.read_csv(os.path.split(filename)[0]+'/metadata.txt')
     row = metadata.loc[metadata["Abbreviation"] == station].iloc[0]

@@ -1,12 +1,13 @@
 
 import numpy as np
 import pandas as pd
+import datetime as dt
 
 
 class ts_obj:
     def __init__(self, t, slip_mm, station, lon, lat, network, obliquity,
                  temp_t=None, temperature=None, orthogonal=None):
-        self.t = t  # time in UTM
+        self.t = t  # time in UTM, pandas dt?
         self.slip_mm = slip_mm  # slip in mm
         self.station = station  # station name, str
         self.lon = lon  # lon in degrees
@@ -18,6 +19,7 @@ class ts_obj:
         self.orthogonal = orthogonal  # optional orthogonal time series
 
     def clip_to_time(self, starttime, endtime):
+        """ What type is starttime, endtime?  I think it's basically a string."""
         if starttime is None and endtime is None:
             return self
 
@@ -69,9 +71,35 @@ class ts_obj:
         )
 
     def get_velocity(self):
-        delta = self.t[1] - self.t[0]
+        delta = self.t[1] - self.t[0]  # assumes a single sampling rate for everything
         seconds = delta.total_seconds()
-        slip_m = self.slip_mm / 1000
-        velocity = np.diff(slip_m) / seconds  # in meters per second
-        time = self.t[0:-1]  # should make this the middle of the window actually
+        slip_m = self.slip_mm / 1000  # slip in meters
+        # velocity = np.diff(slip_m) / seconds  # in meters per second, single difference
+        velocity = (slip_m[2:] - slip_m[0:-2]) / (2 * seconds)  # m/s, use two points for smoothed velocity
+        time = self.t[1:-1]  # should make this the middle of the window actually
         return time, velocity
+
+    def display_sampling_rate_info(self, verbose=True):
+        """
+        Return info about the sampling rate in the time series.
+        Returns the sampling intervals themselves, the unique sampling intervals, and the amounts of each.
+        """
+        seconds, counts = [], []
+        for i in range(len(self.t)-1):
+            temp = self.t[i+1] - self.t[i]
+            seconds.append(temp.total_seconds())
+        seconds = np.array(seconds)
+        unique_intervals = set(seconds)
+        for time_interval in unique_intervals:
+            counts.append(len(seconds[seconds == time_interval]))
+        total_time = (self.t[-1] - self.t[0]).total_seconds()
+        average_sampling = total_time / (len(self.t)-1)
+        if verbose:
+            print("Time series has "+str(len(self.t))+" points from " +
+                  dt.datetime.strftime(self.t[0], "%Y-%m-%d %H:%M:%S")
+                  + " to "+dt.datetime.strftime(self.t[-1], "%Y-%m-%d %H:%M:%S") + " in " + str(len(unique_intervals))
+                  + " unique sampling intervals")
+            print("Average spacing = " + str(average_sampling) + " seconds")
+            for i, (x, y) in enumerate(zip(unique_intervals, counts)):
+                print(i, ':', x, ':', y)
+        return seconds, set(seconds), counts

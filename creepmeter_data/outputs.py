@@ -104,6 +104,7 @@ def plot_many_velocities(list_of_traces, outfilename, xmin=None, xmax=None):
         t_hours = seconds / 3600
         time_axis = t_hours
         ax[0].plot(time_axis, plotting_function, linewidth=0.40)
+        # ax[0].plot(time_axis, plotting_function, '.')
         ax[0].set_ylabel('Displacement (mm)', fontsize=15)
 
         # Get the x-axis and y-axis for a velocity plot
@@ -120,6 +121,7 @@ def plot_many_velocities(list_of_traces, outfilename, xmin=None, xmax=None):
         ax[1].tick_params(axis='y', which='major', labelsize=15)
         ax[1].set_xlabel('Time since start (hr)', fontsize=15)
         ax[1].set_yscale('log')
+        # ax[1].set_ylim([1e-9, 1e-6])
     ax[0].set_title(list_of_traces[0].station + ": " + list_of_traces[0].network + ', n='+str(len(list_of_traces)))
     if xmin is not None:
         ax[1].set_xlim([xmin, xmax])

@@ -2,6 +2,7 @@
 import numpy as np
 import pandas as pd
 import datetime as dt
+import scipy
 
 
 class ts_obj:
@@ -15,7 +16,7 @@ class ts_obj:
         self.network = network  # network, str
         self.obliquity = obliquity  # obliquity in degrees
         self.temperature = temperature  # optional temperature time series
-        self.temperature_t = temp_t   # optional time axis of temperature time series
+        self.temp_t = temp_t   # optional time axis of temperature time series
         self.orthogonal = orthogonal  # optional orthogonal time series
 
     def clip_to_time(self, starttime, endtime):
@@ -37,8 +38,8 @@ class ts_obj:
 
         temp_t_clip = None
         temp_clip = None
-        if self.temperature_t is not None and self.temperature is not None:
-            temp_t = pd.to_datetime(self.temperature_t)
+        if self.temp_t is not None and self.temperature is not None:
+            temp_t = pd.to_datetime(self.temp_t)
             temp_mask = (temp_t >= start) & (temp_t <= end)
             temp_t_clip = temp_t[temp_mask]
             temp_clip = np.asarray(self.temperature)[temp_mask]
@@ -65,7 +66,7 @@ class ts_obj:
             lat=self.lat,
             network=self.network,
             obliquity=self.obliquity,
-            temp_t=self.temperature_t,
+            temp_t=self.temp_t,
             temperature=self.temperature,
             orthogonal=self.orthogonal,
         )
@@ -78,6 +79,21 @@ class ts_obj:
         velocity = (slip_m[2:] - slip_m[0:-2]) / (2 * seconds)  # m/s, use two points for smoothed velocity
         time = self.t[1:-1]  # should make this the middle of the window actually
         return time, velocity
+
+    def smoothed_slip(self):
+        smoothed = scipy.signal.savgol_filter(self.slip_mm, 7, polyorder=3)
+        return ts_obj(
+            t=self.t,
+            slip_mm=smoothed,
+            station=self.station,
+            lon=self.lon,
+            lat=self.lat,
+            network=self.network,
+            obliquity=self.obliquity,
+            temp_t=self.temp_t,
+            temperature=self.temperature,
+            orthogonal=self.orthogonal,
+        )
 
     def display_sampling_rate_info(self, verbose=True):
         """

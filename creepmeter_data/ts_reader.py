@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 import datetime as dt
 import os
-import ts_obj  # local import
+from . import ts_obj
 
 
 def read_slip_over_time(hdf5file, verbose=True):
